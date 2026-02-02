@@ -7,9 +7,6 @@ from reportlab.lib.colors import black, darkblue, white, gray
 
 app = Flask(__name__)
 
-# --- CRIA AS PASTAS ASSIM QUE O ROBÔ LIGA (Correção do Erro) ---
-os.makedirs("/app/assets", exist_ok=True)
-
 # ======================================================
 # ⚙️ CONFIGURAÇÕES
 # ======================================================
@@ -18,8 +15,10 @@ EVOLUTION_URL = "https://oab-evolution-api.iatjve.easypanel.host"
 EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
 URL_BRASAO = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Coat_of_arms_of_Brazil.svg/600px-Coat_of_arms_of_Brazil.svg.png"
 
-# --- FUNÇÕES ---
+# --- FUNÇÕES VISUAIS ---
 def garantir_imagem(url, nome_local):
+    # Garante que a pasta existe antes de salvar imagem
+    os.makedirs("/app/assets", exist_ok=True)
     caminho = f"/app/assets/{nome_local}"
     if os.path.exists(caminho): return caminho
     try:
@@ -54,21 +53,21 @@ def gerar_pdf_premium(caminho, dados):
     
     x_left = 25*mm; y = h - 60*mm
     
-    # BLOCO 1
+    # DADOS
     c.setFillColor(darkblue); c.rect(x_left-2*mm, y-2*mm, 165*mm, 8*mm, stroke=0, fill=1)
     c.setFillColor(white); c.setFont("Times-Bold", 11); c.drawString(x_left, y, "1. DADOS PROCESSUAIS"); c.setFillColor(black); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "PROCESSO:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['numero']); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "CLASSE:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['classe'][:60]); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "VALOR:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['valor']); y -= 15*mm
 
-    # BLOCO 2
+    # PARTES
     c.setFillColor(darkblue); c.rect(x_left-2*mm, y-2*mm, 165*mm, 8*mm, stroke=0, fill=1)
     c.setFillColor(white); c.setFont("Times-Bold", 11); c.drawString(x_left, y, "2. ENVOLVIDOS"); c.setFillColor(black); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "AUTOR:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['partes']['autor']); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "CPF/DOC:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['partes']['doc_autor']); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "RÉU:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['partes']['reu']); y -= 15*mm
 
-    # BLOCO 3
+    # CONTATO
     c.setFillColor(darkblue); c.rect(x_left-2*mm, y-2*mm, 165*mm, 8*mm, stroke=0, fill=1)
     c.setFillColor(white); c.setFont("Times-Bold", 11); c.drawString(x_left, y, "3. INFORMAÇÕES DE CONTATO"); c.setFillColor(black); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "TELEFONE:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['contato']['tel']); y -= 6*mm
@@ -82,7 +81,7 @@ def get_base64(caminho):
 
 @app.route("/", methods=["GET"])
 def home():
-    return "🟢 O ROBÔ ESTÁ ONLINE E FUNCIONANDO!", 200
+    return "🟢 O ROBÔ ESTÁ ONLINE! PASTA CRIADA.", 200
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -94,7 +93,6 @@ def webhook():
             remote_jid = data.get("data", {}).get("key", {}).get("remoteJid")
 
             if "!oab" in text.lower():
-                # DADOS PADRÃO
                 dados = {
                     "numero": "Buscando...",
                     "classe": "Consulta Genérica",
@@ -104,7 +102,6 @@ def webhook():
                     "fonte": "processoweb.com.br"
                 }
 
-                # DADOS DO MATHEUS
                 if "5006623" in text or "5103" in text:
                     dados = {
                         "numero": "5006623-82.2021.4.02.5103",
@@ -122,13 +119,15 @@ def webhook():
                         "fonte": "processoweb.com.br"
                     }
 
+                # --- CORREÇÃO DO ERRO ---
+                # Cria a pasta AQUI, na hora que vai usar
+                os.makedirs("/app/assets", exist_ok=True)
+                
                 nome_arq = f"dossie_{random.randint(1000,9999)}.pdf"
                 caminho = f"/app/assets/{nome_arq}"
                 
-                # Gera o PDF
                 gerar_pdf_premium(caminho, dados)
                 
-                # Envia
                 body = {
                     "number": remote_jid,
                     "media": get_base64(caminho),
@@ -139,5 +138,8 @@ def webhook():
                 }
                 requests.post(f"{EVOLUTION_URL}/message/sendMedia/{INSTANCE_NAME}", json=body, headers={"apikey": EVOLUTION_KEY})
 
-    except Exception as e: print(f"Erro: {e}")
+    except Exception as e: print(f"Erro no webhook: {e}")
     return jsonify({"status": "ok"}), 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
