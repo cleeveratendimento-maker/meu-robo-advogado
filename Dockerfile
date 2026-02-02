@@ -1,13 +1,14 @@
-# Usa a imagem da Microsoft que JÁ TEM o navegador e o Python prontos
-FROM mcr.microsoft.com/playwright/python:v1.41.0-jammy
+# Voltamos para a versão leve (sem navegador pesado)
+FROM python:3.10-slim
 
 WORKDIR /app
+ENV PYTHONUNBUFFERED=1
 
-# Instala apenas as bibliotecas do seu código
+# Instala apenas o necessário para o PDF e o Site
 RUN pip install flask requests gunicorn reportlab Pillow certifi
 
-# Copia seus arquivos
+# Copia os arquivos
 COPY . .
 
-# Comando de Início (Garante a porta 5000)
+# Comando de início (Porta 5000)
 CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5000", "app:app"]
