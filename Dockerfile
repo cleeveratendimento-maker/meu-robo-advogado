@@ -1,18 +1,20 @@
-
-# Usa a imagem oficial do Playwright (Já vem com o Chrome e Linux configurados)
-FROM mcr.microsoft.com/playwright/python:v1.41.0-jammy
+FROM python:3.10-slim
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 
-# 1. Instala o Flask e as ferramentas de PDF (Sem precisar instalar peças do Linux manualmente)
-RUN pip install flask requests gunicorn reportlab Pillow certifi
+# 1. Instala apenas o básico para o sistema não travar
+RUN apt-get update && apt-get install -y wget gnupg && rm -rf /var/lib/apt/lists/*
 
-# 2. Instala os navegadores do Playwright
-RUN playwright install chromium
+# 2. Instala o Python e o Playwright
+RUN pip install flask requests gunicorn reportlab Pillow certifi playwright
 
-# 3. Copia seus arquivos para dentro do servidor
+# 3. O PULO DO GATO: Instala o Chrome E as peças do Linux automaticamente
+# (O --with-deps descobre sozinho o que falta e corrige o erro)
+RUN playwright install --with-deps chromium
+
+# 4. Copia seus arquivos
 COPY . .
 
-# 4. Comando para rodar o robô
+# 5. Roda o robô
 CMD ["gunicorn", "--workers", "2", "--timeout", "120", "--bind", "0.0.0.0:5000", "app:app"]
