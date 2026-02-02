@@ -15,11 +15,10 @@ EVOLUTION_URL = "https://oab-evolution-api.iatjve.easypanel.host"
 EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
 URL_BRASAO = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Coat_of_arms_of_Brazil.svg/600px-Coat_of_arms_of_Brazil.svg.png"
 
-# --- FUNÇÕES VISUAIS ---
+# --- FUNÇÕES ---
 def garantir_imagem(url, nome_local):
-    # Garante que a pasta existe antes de salvar imagem
-    os.makedirs("/app/assets", exist_ok=True)
-    caminho = f"/app/assets/{nome_local}"
+    # SALVA NA PASTA TMP (QUE SEMPRE EXISTE)
+    caminho = f"/tmp/{nome_local}" 
     if os.path.exists(caminho): return caminho
     try:
         r = requests.get(url, timeout=5)
@@ -81,7 +80,7 @@ def get_base64(caminho):
 
 @app.route("/", methods=["GET"])
 def home():
-    return "🟢 O ROBÔ ESTÁ ONLINE! PASTA CRIADA.", 200
+    return "🟢 O ROBÔ ESTÁ ONLINE (MODO TMP)", 200
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -119,12 +118,9 @@ def webhook():
                         "fonte": "processoweb.com.br"
                     }
 
-                # --- CORREÇÃO DO ERRO ---
-                # Cria a pasta AQUI, na hora que vai usar
-                os.makedirs("/app/assets", exist_ok=True)
-                
+                # MUDANÇA PRINCIPAL: Salva na pasta /tmp (que não dá erro)
                 nome_arq = f"dossie_{random.randint(1000,9999)}.pdf"
-                caminho = f"/app/assets/{nome_arq}"
+                caminho = f"/tmp/{nome_arq}"
                 
                 gerar_pdf_premium(caminho, dados)
                 
