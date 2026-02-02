@@ -1,13 +1,12 @@
 FROM python:3.10-slim
 
-# --- O SEGREDO: ISSO FORÇA A ATUALIZAÇÃO ---
-# (O servidor é obrigado a reconstruir tudo por causa dessa linha)
-ENV FORCE_UPDATE=versao_final_corrigida
+# MUDANÇA FORÇADA: Mude o número abaixo para obrigar o servidor a atualizar
+ENV VERSAO_DO_ROBO=2.0_FINAL
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 
-# Instala as ferramentas necessárias
+# Instala as ferramentas
 RUN pip install flask requests gunicorn reportlab Pillow certifi
 
 # Copia os arquivos novos (com a correção do /tmp)
