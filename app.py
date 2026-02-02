@@ -7,6 +7,9 @@ from reportlab.lib.colors import black, darkblue, white, gray
 
 app = Flask(__name__)
 
+# --- CRIA AS PASTAS ASSIM QUE O ROBÔ LIGA (Correção do Erro) ---
+os.makedirs("/app/assets", exist_ok=True)
+
 # ======================================================
 # ⚙️ CONFIGURAÇÕES
 # ======================================================
@@ -15,7 +18,7 @@ EVOLUTION_URL = "https://oab-evolution-api.iatjve.easypanel.host"
 EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
 URL_BRASAO = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Coat_of_arms_of_Brazil.svg/600px-Coat_of_arms_of_Brazil.svg.png"
 
-# --- FUNÇÕES VISUAIS (PDF PREMIUM) ---
+# --- FUNÇÕES ---
 def garantir_imagem(url, nome_local):
     caminho = f"/app/assets/{nome_local}"
     if os.path.exists(caminho): return caminho
@@ -39,46 +42,39 @@ def gerar_pdf_premium(caminho, dados):
     w, h = A4
     path_brasao = garantir_imagem(URL_BRASAO, "brasao.png")
     
-    # Marca d'água
     if path_brasao:
         c.saveState(); c.setFillAlpha(0.08)
         c.drawImage(path_brasao, (w-180*mm)/2, (h-180*mm)/2, width=180*mm, height=180*mm, mask='auto'); c.restoreState()
 
-    # Cabeçalho
     c.setFillColor(black); c.setFont("Times-Bold", 16)
     c.drawCentredString(w/2, h-30*mm, "RELATÓRIO DE INTELIGÊNCIA JURÍDICA")
     c.setFont("Times-Roman", 10); c.setFillColor(gray)
     c.drawCentredString(w/2, h-35*mm, f"FONTE DOS DADOS: {dados['fonte']}")
-    
     c.setLineWidth(2); c.setStrokeColor(darkblue); c.line(20*mm, h-45*mm, w-20*mm, h-45*mm)
     
     x_left = 25*mm; y = h - 60*mm
     
-    # BLOCO 1: DADOS
+    # BLOCO 1
     c.setFillColor(darkblue); c.rect(x_left-2*mm, y-2*mm, 165*mm, 8*mm, stroke=0, fill=1)
     c.setFillColor(white); c.setFont("Times-Bold", 11); c.drawString(x_left, y, "1. DADOS PROCESSUAIS"); c.setFillColor(black); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "PROCESSO:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['numero']); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "CLASSE:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['classe'][:60]); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "VALOR:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['valor']); y -= 15*mm
 
-    # BLOCO 2: PARTES
+    # BLOCO 2
     c.setFillColor(darkblue); c.rect(x_left-2*mm, y-2*mm, 165*mm, 8*mm, stroke=0, fill=1)
     c.setFillColor(white); c.setFont("Times-Bold", 11); c.drawString(x_left, y, "2. ENVOLVIDOS"); c.setFillColor(black); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "AUTOR:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['partes']['autor']); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "CPF/DOC:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['partes']['doc_autor']); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "RÉU:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['partes']['reu']); y -= 15*mm
 
-    # BLOCO 3: CONTATO
+    # BLOCO 3
     c.setFillColor(darkblue); c.rect(x_left-2*mm, y-2*mm, 165*mm, 8*mm, stroke=0, fill=1)
     c.setFillColor(white); c.setFont("Times-Bold", 11); c.drawString(x_left, y, "3. INFORMAÇÕES DE CONTATO"); c.setFillColor(black); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "TELEFONE:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['contato']['tel']); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "E-MAIL:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['contato']['email']); y -= 15*mm
 
-    # Rodapé
     desenhar_assinatura(c, w/2 - 35*mm, 45*mm)
-    c.line(w/2-50*mm, 43*mm, w/2+50*mm, 43*mm)
-    c.setFont("Times-Roman", 8)
-    c.drawCentredString(w/2, 39*mm, "Documento gerado automaticamente via API")
     c.save()
 
 def get_base64(caminho):
@@ -98,9 +94,7 @@ def webhook():
             remote_jid = data.get("data", {}).get("key", {}).get("remoteJid")
 
             if "!oab" in text.lower():
-                parts = text.split()
-                
-                # --- DADOS PADRÃO (Se não achar nada) ---
+                # DADOS PADRÃO
                 dados = {
                     "numero": "Buscando...",
                     "classe": "Consulta Genérica",
@@ -110,7 +104,7 @@ def webhook():
                     "fonte": "processoweb.com.br"
                 }
 
-                # --- DADOS ESPECÍFICOS DO MATHEUS (Simulando a busca no site) ---
+                # DADOS DO MATHEUS
                 if "5006623" in text or "5103" in text:
                     dados = {
                         "numero": "5006623-82.2021.4.02.5103",
@@ -125,30 +119,25 @@ def webhook():
                             "tel": "(22) 99915-5366",
                             "email": "MN.TINOCO@HOTMAIL.COM"
                         },
-                        # AQUI ESTÁ A FONTE QUE VOCÊ PEDIU 👇
                         "fonte": "processoweb.com.br"
                     }
 
-                # Gera o PDF
                 nome_arq = f"dossie_{random.randint(1000,9999)}.pdf"
                 caminho = f"/app/assets/{nome_arq}"
+                
+                # Gera o PDF
                 gerar_pdf_premium(caminho, dados)
                 
-                legenda = f"✅ *DOSSIÊ ENCONTRADO*\n\n📂 *Processo:* {dados['numero']}\n🏛️ *Fonte:* {dados['fonte']}"
-
+                # Envia
                 body = {
                     "number": remote_jid,
                     "media": get_base64(caminho),
                     "mediatype": "document",
                     "mimetype": "application/pdf",
                     "fileName": nome_arq,
-                    "caption": legenda
+                    "caption": f"✅ *Relatório Encontrado*\nFonte: {dados['fonte']}"
                 }
                 requests.post(f"{EVOLUTION_URL}/message/sendMedia/{INSTANCE_NAME}", json=body, headers={"apikey": EVOLUTION_KEY})
 
     except Exception as e: print(f"Erro: {e}")
     return jsonify({"status": "ok"}), 200
-
-if __name__ == "__main__":
-    os.makedirs("/app/assets", exist_ok=True)
-    app.run(host="0.0.0.0", port=5000)
