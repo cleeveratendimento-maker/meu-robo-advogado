@@ -6,7 +6,7 @@ from reportlab.lib.units import mm
 from reportlab.lib.colors import black, darkblue, white, gray
 
 app = Flask(__name__)
-
+print("🚀 VERSAO NOVA CARREGADA: USANDO PASTA TMP 🚀", flush=True)
 # ======================================================
 # ⚙️ CONFIGURAÇÕES
 # ======================================================
