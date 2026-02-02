@@ -1,26 +1,17 @@
-FROM python:3.10-slim
+# Usa a imagem oficial do Playwright (Já vem com o Linux configurado)
+FROM mcr.microsoft.com/playwright/python:v1.41.0-jammy
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 
-# 1. Instala dependências do sistema para o Chrome rodar
-RUN apt-get update && apt-get install -y \
-    wget gnupg libgconf-2-4 libxss1 libnss3 libasound2 \
-    libatk-bridge2.0-0 libgtk-3-0 fonts-liberation libappindicator3-1 \
-    xdg-utils libgbm1 \
-    && rm -rf /var/lib/apt/lists/*
+# 1. Instala o Flask e as ferramentas de PDF
+RUN pip install flask requests gunicorn reportlab Pillow certifi
 
-# 2. Instala Python e Playwright
-RUN pip install flask requests gunicorn reportlab Pillow certifi playwright
+# 2. Instala o Navegador Chromium (Sem erros de sistema)
+RUN playwright install chromium
 
-# 3. Baixa o navegador Chromium
-RUN playwright install --with-deps chromium
+# 3. Copia seus arquivos
+COPY . .
 
-# Pastas e Permissões
-RUN mkdir -p /app/static_pdfs /app/assets
-
-# Copia o código
-COPY app.py .
-
-# Comando de Início
+# 4. Coloca o robô para rodar
 CMD ["gunicorn", "--workers", "2", "--timeout", "120", "--bind", "0.0.0.0:5000", "app:app"]
