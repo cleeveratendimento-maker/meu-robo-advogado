@@ -6,7 +6,7 @@ from reportlab.lib.units import mm
 from reportlab.lib.colors import black, darkblue, white, gray
 
 app = Flask(__name__)
-print("🚀 VERSAO NOVA CARREGADA: USANDO PASTA TMP 🚀", flush=True)
+
 # ======================================================
 # ⚙️ CONFIGURAÇÕES
 # ======================================================
@@ -17,7 +17,7 @@ URL_BRASAO = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Coat_of_
 
 # --- FUNÇÕES ---
 def garantir_imagem(url, nome_local):
-    # SALVA NA PASTA TMP (QUE SEMPRE EXISTE)
+    # SALVA TUDO NA PASTA /tmp (PARA NÃO DAR ERRO)
     caminho = f"/tmp/{nome_local}" 
     if os.path.exists(caminho): return caminho
     try:
@@ -52,21 +52,21 @@ def gerar_pdf_premium(caminho, dados):
     
     x_left = 25*mm; y = h - 60*mm
     
-    # DADOS
+    # BLOCO 1
     c.setFillColor(darkblue); c.rect(x_left-2*mm, y-2*mm, 165*mm, 8*mm, stroke=0, fill=1)
     c.setFillColor(white); c.setFont("Times-Bold", 11); c.drawString(x_left, y, "1. DADOS PROCESSUAIS"); c.setFillColor(black); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "PROCESSO:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['numero']); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "CLASSE:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['classe'][:60]); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "VALOR:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['valor']); y -= 15*mm
 
-    # PARTES
+    # BLOCO 2
     c.setFillColor(darkblue); c.rect(x_left-2*mm, y-2*mm, 165*mm, 8*mm, stroke=0, fill=1)
     c.setFillColor(white); c.setFont("Times-Bold", 11); c.drawString(x_left, y, "2. ENVOLVIDOS"); c.setFillColor(black); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "AUTOR:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['partes']['autor']); y -= 6*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "CPF/DOC:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['partes']['doc_autor']); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "RÉU:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['partes']['reu']); y -= 15*mm
 
-    # CONTATO
+    # BLOCO 3
     c.setFillColor(darkblue); c.rect(x_left-2*mm, y-2*mm, 165*mm, 8*mm, stroke=0, fill=1)
     c.setFillColor(white); c.setFont("Times-Bold", 11); c.drawString(x_left, y, "3. INFORMAÇÕES DE CONTATO"); c.setFillColor(black); y -= 10*mm
     c.setFont("Times-Bold", 10); c.drawString(x_left, y, "TELEFONE:"); c.setFont("Times-Roman", 10); c.drawString(x_left+25*mm, y, dados['contato']['tel']); y -= 6*mm
@@ -80,7 +80,7 @@ def get_base64(caminho):
 
 @app.route("/", methods=["GET"])
 def home():
-    return "🟢 O ROBÔ ESTÁ ONLINE (MODO TMP)", 200
+    return "🟢 O ROBÔ ESTÁ ONLINE E ATUALIZADO (VERSÃO FINAL)", 200
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -118,7 +118,7 @@ def webhook():
                         "fonte": "processoweb.com.br"
                     }
 
-                # MUDANÇA PRINCIPAL: Salva na pasta /tmp (que não dá erro)
+                # CRIA O PDF NA PASTA TMP
                 nome_arq = f"dossie_{random.randint(1000,9999)}.pdf"
                 caminho = f"/tmp/{nome_arq}"
                 
