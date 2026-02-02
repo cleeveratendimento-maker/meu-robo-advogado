@@ -1,15 +1,13 @@
+# Usa a imagem da Microsoft que JÁ TEM o navegador e o Python prontos
 FROM mcr.microsoft.com/playwright/python:v1.41.0-jammy
 
 WORKDIR /app
-ENV PYTHONUNBUFFERED=1
 
-# Instala bibliotecas Python
+# Instala apenas as bibliotecas do seu código
 RUN pip install flask requests gunicorn reportlab Pillow certifi
 
-# Instala navegador
-RUN playwright install chromium
-
+# Copia seus arquivos
 COPY . .
 
-# Inicia o robô
+# Comando de Início (Garante a porta 5000)
 CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5000", "app:app"]
