@@ -1,7 +1,7 @@
 FROM python:3.10-slim
 
-# MUDANÇA FORÇADA: Mude o número abaixo para obrigar o servidor a atualizar
-ENV VERSAO_DO_ROBO=2.0_FINAL
+# ESSA LINHA OBRIGA A ATUALIZAR
+ENV FORCE_UPDATE=v5_resolvido
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
@@ -9,8 +9,12 @@ ENV PYTHONUNBUFFERED=1
 # Instala as ferramentas
 RUN pip install flask requests gunicorn reportlab Pillow certifi
 
-# Copia os arquivos novos (com a correção do /tmp)
+# --- O TRUQUE DE MESTRE ---
+# Criamos a pasta /app/assets na marra para o robô não reclamar
+RUN mkdir -p /app/assets && chmod 777 /app/assets
+
+# Copia os arquivos
 COPY . .
 
-# Inicia o robô na porta 5000
+# Inicia o robô
 CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5000", "app:app"]
