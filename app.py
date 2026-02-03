@@ -23,8 +23,8 @@ EMAIL_DESTINO_TOMTICKET = "chamados.ti@pillowtex.com.br"
 # 👇 SEU GMAIL E SENHA DE APP
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "seu.email@gmail.com"      # 🔴 SEU GMAIL
-SMTP_PASSWORD = "xxxx xxxx xxxx xxxx"  # 🔴 SUA SENHA DE APP
+SMTP_USER = "ti.monitoriamento@gmail.com"      # 🔴 SEU GMAIL
+SMTP_PASSWORD = "lvvg ragw eqry fgdz"  # 🔴 SUA SENHA DE APP
 
 # 👇 DADOS DO EVOLUTION API
 INSTANCE_NAME = "Chatboot"
