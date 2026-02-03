@@ -28,7 +28,7 @@ SMTP_PASSWORD = "lvvg ragw eqry fgdz"  # 🔴 SUA SENHA DE APP
 
 # 👇 DADOS DO EVOLUTION API
 INSTANCE_NAME = "Chatboot"
-EVOLUTION_URL = "[https://chatboot-evolution-api.iatjve.easypanel.host](https://chatboot-evolution-api.iatjve.easypanel.host)"
+EVOLUTION_URL = "https://chatboot-evolution-api.iatjve.easypanel.host](https://chatboot-evolution-api.iatjve.easypanel.host"
 EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
 
 # GIF DE BOAS-VINDAS (Tech Blue)
