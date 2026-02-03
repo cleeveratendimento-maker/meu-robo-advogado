@@ -13,7 +13,7 @@ app = Flask(__name__)
 # ======================================================
 # ⚙️ CONFIGURAÇÕES (PREENCHA AQUI!)
 # ======================================================
-JIRA_SERVER = "https://zonacriativa.atlassian.net"
+JIRA_SERVER = "[https://zonacriativa.atlassian.net](https://zonacriativa.atlassian.net)"
 JIRA_EMAIL_LOGIN = "ti@pillowtex.com.br"
 # 👇 SEU TOKEN JIRA
 JIRA_TOKEN = "ATATT3xFfGF0gTvEQie0CsNToWBMT5sgW-kXIwm5HH4vkEqRFl_M2s1peiP0GtjsoBWe5wk_mnLOsTByWxR_RXQXa3Qxa8-bQj3uTB2WPBC12nwtFW59FD2K5xpGbOjFnLQ7ngz2v69_Vn8XZ5iOmO6O5AlGfQIZE7YnJ99RnRAftvd9RiOQ9tc=F9128AAA"
@@ -28,16 +28,16 @@ SMTP_PASSWORD = "lvvg ragw eqry fgdz"  # 🔴 SUA SENHA DE APP
 
 # 👇 DADOS DO EVOLUTION API
 INSTANCE_NAME = "Chatboot"
-EVOLUTION_URL = "https://chatboot-evolution-api.iatjve.easypanel.host"
+EVOLUTION_URL = "[https://chatboot-evolution-api.iatjve.easypanel.host](https://chatboot-evolution-api.iatjve.easypanel.host)"
 EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
 
 # GIF DE BOAS-VINDAS (Tech Blue)
-BANNER_GIF = "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmJmaG14cm14bnh6eGxhYm14bnh6eGxhYm14bnh6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPEqDGUULpEU0aQ/giphy.gif"
+BANNER_GIF = "[https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmJmaG14cm14bnh6eGxhYm14bnh6eGxhYm14bnh6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPEqDGUULpEU0aQ/giphy.gif](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmJmaG14cm14bnh6eGxhYm14bnh6eGxhYm14bnh6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPEqDGUULpEU0aQ/giphy.gif)"
 
 estados_usuarios = {}
 
 # ======================================================
-# 🎨 FUNÇÕES VISUAIS (A BELEZA DO SISTEMA)
+# 🎨 FUNÇÕES VISUAIS
 # ======================================================
 
 def reagir(numero, emoji):
@@ -59,9 +59,9 @@ def enviar_msg(numero, texto):
 
 def apresentar_menu_principal(numero):
     try:
-        reagir(numero, "💠") # Reage com diamante azul
+        reagir(numero, "💠")
         
-        # 1. Envia o GIF primeiro
+        # 1. Envia o GIF
         requests.post(f"{EVOLUTION_URL}/message/sendMedia/{INSTANCE_NAME}", 
                       json={"number": numero, "media": BANNER_GIF, "mediatype": "video", "caption": "💠 *SISTEMA N.O.V.A. ONLINE*"}, 
                       headers={"apikey": EVOLUTION_KEY})
@@ -69,23 +69,8 @@ def apresentar_menu_principal(numero):
         time.sleep(2)
         digitando(numero)
 
-        # 2. Envia o Menu Desenhado (Funciona em iPhone e Android)
-        menu = """╔════════════════════╗
-║   CENTRAL DE COMANDO   ║
-╚════════════════════╝
-
-Olá. Selecione o protocolo desejado:
-
-1️⃣  *INICIAR SUPORTE*
-      _Abrir novo chamado técnico_
-
-2️⃣  *RASTREAR SDB*
-      _Consultar status de protocolo_
-
-3️⃣  *ATENDENTE HUMANO*
-      _Conexão direta com analista_
-
-_> Digite apenas o número da opção:_"""
+        # 2. Envia o Menu
+        menu = "╔════════════════════╗\n║   CENTRAL DE COMANDO   ║\n╚════════════════════╝\n\nOlá. Selecione o protocolo desejado:\n\n1️⃣  *INICIAR SUPORTE*\n      _Abrir novo chamado técnico_\n\n2️⃣  *RASTREAR SDB*\n      _Consultar status de protocolo_\n\n3️⃣  *ATENDENTE HUMANO*\n      _Conexão direta com analista_\n\n_> Digite apenas o número da opção:_"
         enviar_msg(numero, menu)
 
     except Exception as e: print(e)
@@ -113,7 +98,7 @@ def enviar_email(nome, email_user, problema):
         msg['From'] = SMTP_USER
         msg['To'] = EMAIL_DESTINO_TOMTICKET
         msg['Subject'] = f"[BOT] Chamado: {nome}"
-        msg.add_header('Reply-To', email_user) # Resposta vai pro usuário
+        msg.add_header('Reply-To', email_user)
         
         corpo = f"Solicitante: {nome}\nEmail: {email_user}\n\nRelato:\n{problema}\n\n--\nEnviado por N.O.V.A. System."
         msg.attach(MIMEText(corpo, 'plain'))
@@ -140,21 +125,18 @@ def webhook(path=None):
         if not texto or not remetente: return "OK", 200
         texto_lower = texto.lower().strip()
         
-        # === GATILHOS DE ENTRADA ===
+        # === GATILHOS ===
         gatilhos = ["oi", "ola", "menu", "ajuda", "ti", "suporte", "nova", "inicio"]
         
         if remetente not in estados_usuarios:
-            # Se for comando SDB direto
             if "sdb" in texto_lower: pass 
-            # Se não for gatilho, ignora
             elif not any(x in texto_lower for x in gatilhos): return "OK", 200
             
-            # Se não for opção de menu, mostra o MENU PRINCIPAL
             if not "sdb" in texto_lower and texto_lower not in ["1", "2", "3"]:
                  apresentar_menu_principal(remetente)
                  return "OK", 200
 
-        # === COMANDOS DO MENU ===
+        # === COMANDOS ===
         acao = ""
         if texto_lower == "1": acao = "abrir"
         elif texto_lower == "2": acao = "status"
@@ -176,7 +158,7 @@ def webhook(path=None):
              enviar_msg(remetente, "✅ *CONECTANDO...*\nTransferindo conexão para um analista humano.")
              return "OK", 200
 
-        # === FLUXO DE ABERTURA DE CHAMADO ===
+        # === FLUXO ===
         if remetente in estados_usuarios:
             passo = estados_usuarios[remetente]["passo"]
             
@@ -195,4 +177,34 @@ def webhook(path=None):
             elif passo == "aguardando_problema":
                 enviar_msg(remetente, "⏳ *PROCESSANDO DADOS...*")
                 if enviar_email(estados_usuarios[remetente]["dados"]["nome"], estados_usuarios[remetente]["dados"]["email"], texto):
-                    msg_final = """✅ *PROTOCOLO REGISTRADO*
+                    # 👇 AQUI ESTAVA O ERRO, AGORA ESTÁ CORRIGIDO COM \n
+                    msg_final = "✅ *PROTOCOLO REGISTRADO*\n```\nSTATUS:  ATIVO\nDESTINO: SUPORTE TÉCNICO\nAVISO:   VERIFIQUE SEU EMAIL\n```"
+                    enviar_msg(remetente, msg_final)
+                else:
+                    reagir(remetente, "❌")
+                    enviar_msg(remetente, "⚠️ *FALHA DE SISTEMA*\nServidor de e-mail indisponível. Tente mais tarde.")
+                del estados_usuarios[remetente]
+            return "OK", 200
+
+        # === SDB ===
+        if "sdb" in texto_lower:
+            num = "".join([c for c in texto if c.isdigit()])
+            chave = f"SDB-{num}"
+            reagir(remetente, "🔄")
+            enviar_msg(remetente, f"🔄 *BUSCANDO {chave}...*")
+            
+            d = consultar_jira(chave)
+            if d:
+                reagir(remetente, "📂")
+                # Outra correção preventiva aqui também
+                resp = f"📂 *RELATÓRIO TÉCNICO | {chave}*\n━━━━━━━━━━━━━━━━━━\n_{d['resumo']}_\n\n```\nSTATUS: {d['status']}\nRESP:   {d['responsavel']}\nDATA:   {d['data']}\n```\n━━━━━━━━━━━━━━━━━━\n🔗 {d['link']}"
+            else:
+                reagir(remetente, "🚫")
+                resp = f"🚫 *PROTOCOLO {chave} NÃO ENCONTRADO*"
+            enviar_msg(remetente, resp)
+
+    except Exception as e: print(e)
+    return jsonify({"status": "ok"}), 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
