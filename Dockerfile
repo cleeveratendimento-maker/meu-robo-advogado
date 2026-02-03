@@ -1,22 +1,14 @@
-# Dockerfile MÍNIMO para EasyPane
-FROM python:3.11-slim
+# Usa uma versão leve do Python
+FROM python:3.10-slim
 
-# Instalar dependências mínimas
-RUN apt-get update && apt-get install -y wget curl
-
-# Instalar Chrome simplificado
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get install -y ./google-chrome-stable_current_amd64.deb \
-    && rm google-chrome-stable_current_amd64.deb
-
-# Diretório de trabalho
+# Cria a pasta do app
 WORKDIR /app
 
-# Copiar código
-COPY app.py .
+# Instala as bibliotecas necessárias
+RUN pip install flask requests gunicorn jira
 
-# Instalar Python packages
-RUN pip install selenium==4.15.2
+# Copia os arquivos do GitHub para dentro do robô
+COPY . .
 
-# Comando
-CMD ["python", "app.py"]
+# Inicia o robô com 1 Worker (Memória Única para não esquecer a conversa)
+CMD ["gunicorn", "--workers", "1", "--bind", "0.0.0.0:5000", "app:app"]
