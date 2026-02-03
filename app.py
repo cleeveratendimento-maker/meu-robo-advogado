@@ -13,7 +13,7 @@ app = Flask(__name__)
 # ======================================================
 # ⚙️ CONFIGURAÇÕES (PREENCHA AQUI!)
 # ======================================================
-JIRA_SERVER = "[https://zonacriativa.atlassian.net](https://zonacriativa.atlassian.net)"
+JIRA_SERVER = "https://zonacriativa.atlassian.net](https://zonacriativa.atlassian.net"
 JIRA_EMAIL_LOGIN = "ti@pillowtex.com.br"
 # 👇 SEU TOKEN JIRA
 JIRA_TOKEN = "ATATT3xFfGF0gTvEQie0CsNToWBMT5sgW-kXIwm5HH4vkEqRFl_M2s1peiP0GtjsoBWe5wk_mnLOsTByWxR_RXQXa3Qxa8-bQj3uTB2WPBC12nwtFW59FD2K5xpGbOjFnLQ7ngz2v69_Vn8XZ5iOmO6O5AlGfQIZE7YnJ99RnRAftvd9RiOQ9tc=F9128AAA"
@@ -28,11 +28,11 @@ SMTP_PASSWORD = "lvvg ragw eqry fgdz"  # 🔴 SUA SENHA DE APP
 
 # 👇 DADOS DO EVOLUTION API
 INSTANCE_NAME = "Chatboot"
-EVOLUTION_URL = "https://chatboot-evolution-api.iatjve.easypanel.host](https://chatboot-evolution-api.iatjve.easypanel.host"
+EVOLUTION_URL = "https://chatboot-evolution-api.iatjve.easypanel.host"
 EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
 
 # GIF DE BOAS-VINDAS (Tech Blue)
-BANNER_GIF = "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmJmaG14cm14bnh6eGxhYm14bnh6eGxhYm14bnh6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPEqDGUULpEU0aQ/giphy.gif](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmJmaG14cm14bnh6eGxhYm14bnh6eGxhYm14bnh6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPEqDGUULpEU0aQ/giphy.gif"
+BANNER_GIF = "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmJmaG14cm14bnh6eGxhYm14bnh6eGxhYm14bnh6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPEqDGUULpEU0aQ/giphy.gif"
 
 estados_usuarios = {}
 
