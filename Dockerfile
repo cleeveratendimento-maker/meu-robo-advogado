@@ -3,12 +3,12 @@ FROM python:3.10-slim
 # --- CONFIGURAÇÃO ---
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
-ENV VERSAO_BOT=16.0_NOVA_TEXT_MENU
+ENV VERSAO_BOT=17.0_NOVA_LIST_MENU
 
 # Instala bibliotecas
 RUN pip install flask requests gunicorn jira
 
-# --- CÓDIGO PYTHON (COM MENU DE TEXTO INFALÍVEL) ---
+# --- CÓDIGO PYTHON (COM MENU LISTA) ---
 RUN cat <<'EOF' > app.py
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
@@ -45,45 +45,64 @@ EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
 estados_usuarios = {}
 
 # ======================================================
-# 🎨 FUNÇÕES DE ENVIO (SIMPLIFICADAS)
+# 🎨 FUNÇÕES VISUAIS (LISTA)
 # ======================================================
 
 def enviar_msg(numero, texto):
-    # Simula digitação para parecer natural
     try:
         requests.post(f"{EVOLUTION_URL}/chat/sendPresence/{INSTANCE_NAME}", 
                       json={"number": numero, "presence": "composing", "delay": 1200}, headers={"apikey": EVOLUTION_KEY})
-    except: pass
-    
-    # Envia o texto
-    requests.post(f"{EVOLUTION_URL}/message/sendText/{INSTANCE_NAME}", 
-                  json={"number": numero, "text": texto}, headers={"apikey": EVOLUTION_KEY})
-
-def apresentar_menu(numero):
-    try:
-        # Reage com um emoji
-        requests.post(f"{EVOLUTION_URL}/message/sendReaction/{INSTANCE_NAME}", 
-                      json={"number": numero, "reaction": "🤖"}, headers={"apikey": EVOLUTION_KEY})
         
-        # --- MENU DE TEXTO (100% SEGURO) ---
-        menu = (
-            "💠 *SYSTEM ONLINE v16.0*\n"
-            "Olá! Sou a N.O.V.A. Assistente Virtual.\n\n"
-            "Digite o número da opção desejada:\n\n"
-            "1️⃣ *ABRIR CHAMADO*\n"
-            "   _Relatar problemas de TI_\n\n"
-            "2️⃣ *RASTREAR SDB*\n"
-            "   _Consultar status no Jira_\n\n"
-            "3️⃣ *FALAR COM HUMANO*\n"
-            "   _Transferir atendimento_\n\n"
-            "_"
-        )
-        enviar_msg(numero, menu)
+        requests.post(f"{EVOLUTION_URL}/message/sendText/{INSTANCE_NAME}", 
+                      json={"number": numero, "text": texto}, headers={"apikey": EVOLUTION_KEY})
+    except: pass
 
-    except Exception as e: print(f"Erro menu: {e}")
+def apresentar_lista(numero):
+    try:
+        # Reage para dar feedback visual
+        requests.post(f"{EVOLUTION_URL}/message/sendReaction/{INSTANCE_NAME}", 
+                      json={"number": numero, "reaction": "💠"}, headers={"apikey": EVOLUTION_KEY})
+
+        # --- ESTRUTURA DA LISTA (LIST MESSAGE) ---
+        payload = {
+            "number": numero,
+            "title": "💠 SYSTEM ONLINE v17.0",
+            "description": "Olá! Sou a N.O.V.A. Como posso ajudar você hoje?",
+            "buttonText": "VER OPÇÕES",  # O texto do botão que abre a lista
+            "footer": "Pillowtex TI",
+            "sections": [
+                {
+                    "title": "Serviços Disponíveis",
+                    "rows": [
+                        {
+                            "rowId": "1",
+                            "title": "📝 Abrir Chamado",
+                            "description": "Relatar problemas de TI"
+                        },
+                        {
+                            "rowId": "2",
+                            "title": "🔍 Rastrear SDB",
+                            "description": "Consultar status no Jira"
+                        },
+                        {
+                            "rowId": "3",
+                            "title": "👤 Falar com Humano",
+                            "description": "Transferir atendimento"
+                        }
+                    ]
+                }
+            ]
+        }
+        
+        # Endpoint específico para listas
+        requests.post(f"{EVOLUTION_URL}/message/sendList/{INSTANCE_NAME}", 
+                      json=payload, 
+                      headers={"apikey": EVOLUTION_KEY})
+
+    except Exception as e: print(f"Erro lista: {e}")
 
 # ======================================================
-# 🔧 LÓGICA
+# 🔧 LÓGICA PRINCIPAL
 # ======================================================
 def consultar_jira(ticket_id):
     try:
@@ -124,19 +143,26 @@ def webhook(path=None):
         msg = data.get("data", {}).get("message", {})
         remetente = data.get("data", {}).get("key", {}).get("remoteJid")
         
-        # Pega o texto de qualquer lugar
-        texto = msg.get("conversation") or msg.get("extendedTextMessage", {}).get("text") or ""
+        # --- PARSER ATUALIZADO (SUPORTE A LISTA) ---
+        # Captura texto normal, resposta de botão ou resposta de lista
+        texto = (
+            msg.get("conversation") or 
+            msg.get("extendedTextMessage", {}).get("text") or
+            msg.get("buttonsResponseMessage", {}).get("selectedButtonId") or
+            msg.get("listResponseMessage", {}).get("singleSelectReply", {}).get("selectedRowId") or
+            ""
+        )
         
         if not texto or not remetente: return "OK", 200
         texto_lower = texto.lower().strip()
 
         # === 1. COMANDOS DE RESET ===
-        if texto_lower in ["sair", "menu", "cancelar"]:
+        if texto_lower in ["sair", "menu", "cancelar", "reset"]:
             if remetente in estados_usuarios: del estados_usuarios[remetente]
-            apresentar_menu(remetente)
+            apresentar_lista(remetente)
             return "OK", 200
 
-        # === 2. FLUXO DE CADASTRO (Se já começou) ===
+        # === 2. FLUXO DE CADASTRO ===
         if remetente in estados_usuarios:
             passo = estados_usuarios[remetente]["passo"]
             
@@ -160,6 +186,7 @@ def webhook(path=None):
             return "OK", 200
 
         # === 3. MENU PRINCIPAL (Gatilhos) ===
+        # Aceita tanto o número "1" digitado quanto o ID "1" clicado na lista
         if texto_lower == "1":
             estados_usuarios[remetente] = {"passo": "nome", "dados": {}}
             enviar_msg(remetente, "📝 Digite seu *Nome Completo*:")
@@ -180,9 +207,8 @@ def webhook(path=None):
             else: enviar_msg(remetente, f"🚫 SDB-{num} não encontrado.")
             return "OK", 200
 
-        # === 4. SE NÃO ENTENDEU, MOSTRA O MENU ===
-        # Se não é comando conhecido, manda o menu
-        apresentar_menu(remetente)
+        # === 4. SE NÃO ENTENDEU, MOSTRA A LISTA ===
+        apresentar_lista(remetente)
 
     except Exception as e: print(e)
     return "OK", 200
