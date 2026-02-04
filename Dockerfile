@@ -1,14 +1,14 @@
 FROM python:3.10-slim
 
-# --- CONFIGURAÇÃO DO AMBIENTE ---
+# --- CONFIGURAÇÃO ---
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
-ENV VERSAO_BOT=15.0_NOVA_BUTTONS_PRO
+ENV VERSAO_BOT=16.0_NOVA_TEXT_MENU
 
-# 1. Instalação das bibliotecas
+# Instala bibliotecas
 RUN pip install flask requests gunicorn jira
 
-# 2. ESCREVENDO O CÓDIGO PYTHON (ATUALIZADO COM BOTÕES)
+# --- CÓDIGO PYTHON (COM MENU DE TEXTO INFALÍVEL) ---
 RUN cat <<'EOF' > app.py
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
@@ -27,18 +27,17 @@ app = Flask(__name__)
 # ======================================================
 JIRA_SERVER = "https://zonacriativa.atlassian.net"
 JIRA_EMAIL_LOGIN = "ti@pillowtex.com.br"
-# Token Jira (Mantido do seu código original)
 JIRA_TOKEN = "ATATT3xFfGF0gTvEQie0CsNToWBMT5sgW-kXIwm5HH4vkEqRFl_M2s1peiP0GtjsoBWe5wk_mnLOsTByWxR_RXQXa3Qxa8-bQj3uTB2WPBC12nwtFW59FD2K5xpGbOjFnLQ7ngz2v69_Vn8XZ5iOmO6O5AlGfQIZE7YnJ99RnRAftvd9RiOQ9tc=F9128AAA"
 
 EMAIL_DESTINO_TOMTICKET = "chamados.ti@pillowtex.com.br"
 
-# 👇👇👇 DADOS DE ENVIO (GMAIL) 👇👇👇
+# SMTP (GMAIL)
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "seu.email@gmail.com"      # 🔴 SEU GMAIL AQUI
-SMTP_PASSWORD = "xxxx xxxx xxxx xxxx"  # 🔴 SENHA DE APP AQUI
+SMTP_USER = "seu.email@gmail.com"      # 🔴 CONFIGURAR
+SMTP_PASSWORD = "xxxx xxxx xxxx xxxx"  # 🔴 CONFIGURAR
 
-# Dados da Evolution API
+# EVOLUTION API
 INSTANCE_NAME = "Chatboot"
 EVOLUTION_URL = "https://chatboot-evolution-api.iatjve.easypanel.host"
 EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
@@ -46,52 +45,45 @@ EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
 estados_usuarios = {}
 
 # ======================================================
-# 🎨 MOTOR VISUAL N.O.V.A. (COM BOTÕES)
+# 🎨 FUNÇÕES DE ENVIO (SIMPLIFICADAS)
 # ======================================================
 
-def reagir(numero, emoji):
-    try:
-        requests.post(f"{EVOLUTION_URL}/message/sendReaction/{INSTANCE_NAME}", 
-                      json={"number": numero, "reaction": emoji}, headers={"apikey": EVOLUTION_KEY})
-    except: pass
-
-def digitando(numero):
+def enviar_msg(numero, texto):
+    # Simula digitação para parecer natural
     try:
         requests.post(f"{EVOLUTION_URL}/chat/sendPresence/{INSTANCE_NAME}", 
                       json={"number": numero, "presence": "composing", "delay": 1200}, headers={"apikey": EVOLUTION_KEY})
     except: pass
-
-def enviar_msg(numero, texto):
-    digitando(numero)
+    
+    # Envia o texto
     requests.post(f"{EVOLUTION_URL}/message/sendText/{INSTANCE_NAME}", 
                   json={"number": numero, "text": texto}, headers={"apikey": EVOLUTION_KEY})
 
-def apresentar_interface_ai(numero):
+def apresentar_menu(numero):
     try:
-        reagir(numero, "💠")
-        digitando(numero)
+        # Reage com um emoji
+        requests.post(f"{EVOLUTION_URL}/message/sendReaction/{INSTANCE_NAME}", 
+                      json={"number": numero, "reaction": "🤖"}, headers={"apikey": EVOLUTION_KEY})
         
-        # --- AQUI ESTÁ A MUDANÇA PARA BOTÕES ---
-        payload = {
-            "number": numero,
-            "title": "💠 SYSTEM ONLINE v15.0",
-            "description": "Olá! Sou a N.O.V.A. Escolha uma opção abaixo:",
-            "footer": "Pillowtex TI",
-            "buttons": [
-                {"id": "1", "displayText": "📝 ABRIR CHAMADO"},
-                {"id": "2", "displayText": "🔍 RASTREAR SDB"},
-                {"id": "3", "displayText": "👤 FALA C/ HUMANO"}
-            ]
-        }
-        
-        requests.post(f"{EVOLUTION_URL}/message/sendButtons/{INSTANCE_NAME}", 
-                      json=payload, 
-                      headers={"apikey": EVOLUTION_KEY})
+        # --- MENU DE TEXTO (100% SEGURO) ---
+        menu = (
+            "💠 *SYSTEM ONLINE v16.0*\n"
+            "Olá! Sou a N.O.V.A. Assistente Virtual.\n\n"
+            "Digite o número da opção desejada:\n\n"
+            "1️⃣ *ABRIR CHAMADO*\n"
+            "   _Relatar problemas de TI_\n\n"
+            "2️⃣ *RASTREAR SDB*\n"
+            "   _Consultar status no Jira_\n\n"
+            "3️⃣ *FALAR COM HUMANO*\n"
+            "   _Transferir atendimento_\n\n"
+            "_"
+        )
+        enviar_msg(numero, menu)
 
-    except Exception as e: print(e)
+    except Exception as e: print(f"Erro menu: {e}")
 
 # ======================================================
-# 🔧 NÚCLEO LÓGICO (JIRA + EMAIL)
+# 🔧 LÓGICA
 # ======================================================
 def consultar_jira(ticket_id):
     try:
@@ -100,8 +92,7 @@ def consultar_jira(ticket_id):
         return {
             "resumo": issue.fields.summary,
             "status": issue.fields.status.name.upper(),
-            "responsavel": issue.fields.assignee.displayName if issue.fields.assignee else "Fila Automática",
-            "data": datetime.datetime.strptime(issue.fields.created, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%d/%m/%Y"),
+            "responsavel": issue.fields.assignee.displayName if issue.fields.assignee else "Automático",
             "link": f"{JIRA_SERVER}/browse/{ticket_id}"
         }
     except: return None
@@ -111,11 +102,9 @@ def enviar_email(nome, email_user, problema):
         msg = MIMEMultipart()
         msg['From'] = SMTP_USER
         msg['To'] = EMAIL_DESTINO_TOMTICKET
-        msg['Subject'] = f"[NOVA AI] Ticket: {nome}"
+        msg['Subject'] = f"[NOVA] Ticket: {nome}"
         msg.add_header('Reply-To', email_user)
-        
-        corpo = f"RELATÓRIO DE INCIDENTE\n======================\n\nUSUÁRIO: {nome}\nEMAIL: {email_user}\n\nDESCRIÇÃO:\n{problema}\n\n--\nProcessado por N.O.V.A. v15.0"
-        msg.attach(MIMEText(corpo, 'plain'))
+        msg.attach(MIMEText(f"USUÁRIO: {nome}\nEMAIL: {email_user}\n\n{problema}", 'plain'))
 
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
@@ -133,109 +122,73 @@ def webhook(path=None):
         if not data or data.get("event") != "messages.upsert": return "OK", 200
         
         msg = data.get("data", {}).get("message", {})
-        
-        # --- PARSER ATUALIZADO (IMPORTANTE) ---
-        # Agora ele lê: Texto Normal OU Resposta de Botão
-        texto = (
-            msg.get("conversation") or 
-            msg.get("extendedTextMessage", {}).get("text") or
-            msg.get("buttonsResponseMessage", {}).get("selectedButtonId") or 
-            ""
-        )
-        
         remetente = data.get("data", {}).get("key", {}).get("remoteJid")
+        
+        # Pega o texto de qualquer lugar
+        texto = msg.get("conversation") or msg.get("extendedTextMessage", {}).get("text") or ""
         
         if not texto or not remetente: return "OK", 200
         texto_lower = texto.lower().strip()
-        
-        # === COMANDOS DE RESET ===
-        if texto_lower in ["sair", "cancelar", "reset", "menu"]:
+
+        # === 1. COMANDOS DE RESET ===
+        if texto_lower in ["sair", "menu", "cancelar"]:
             if remetente in estados_usuarios: del estados_usuarios[remetente]
-            apresentar_interface_ai(remetente)
+            apresentar_menu(remetente)
             return "OK", 200
 
-        # === GATILHOS INICIAIS ===
-        gatilhos = ["oi", "ola", "bom dia", "ajuda", "ti", "suporte", "nova", "inicio"]
-        
-        if remetente not in estados_usuarios:
-            if "sdb" in texto_lower: pass
-            elif not any(x in texto_lower for x in gatilhos) and texto_lower not in ["1", "2", "3"]: 
-                return "OK", 200
-            
-            # Se não é comando direto, mostra menu
-            if not "sdb" in texto_lower and texto_lower not in ["1", "2", "3"]:
-                 apresentar_interface_ai(remetente)
-                 return "OK", 200
-
-        # === ROTEADOR DE OPÇÕES ===
-        acao = ""
-        if texto_lower == "1": acao = "abrir"
-        elif texto_lower == "2": acao = "status"
-        elif texto_lower == "3": acao = "falar"
-
-        if acao == "abrir":
-            reagir(remetente, "📝")
-            estados_usuarios[remetente] = {"passo": "aguardando_nome", "dados": {}}
-            enviar_msg(remetente, "📝 *PROTOCOLO DE ABERTURA*\n\nPor favor, digite seu *Nome Completo*:")
-            return "OK", 200
-
-        if acao == "status":
-             reagir(remetente, "🔍")
-             enviar_msg(remetente, "🔍 *RASTREIO SDB*\n\nInforme o código do protocolo (Ex: SDB 90609):")
-             return "OK", 200
-             
-        if acao == "falar":
-             reagir(remetente, "👤")
-             enviar_msg(remetente, "✅ Transferindo para analista humano...\nAguarde um instante.")
-             return "OK", 200
-
-        # === FLUXO DE ABERTURA (ETAPAS) ===
+        # === 2. FLUXO DE CADASTRO (Se já começou) ===
         if remetente in estados_usuarios:
             passo = estados_usuarios[remetente]["passo"]
             
-            if passo == "aguardando_nome":
+            if passo == "nome":
                 estados_usuarios[remetente]["dados"]["nome"] = texto
-                estados_usuarios[remetente]["passo"] = "aguardando_email"
-                enviar_msg(remetente, f"Ok, *{texto}*.\nAgora digite seu *E-mail Corporativo*:")
+                estados_usuarios[remetente]["passo"] = "email"
+                enviar_msg(remetente, f"Ok, *{texto}*. Qual seu *E-mail*?")
             
-            elif passo == "aguardando_email":
+            elif passo == "email":
                 estados_usuarios[remetente]["dados"]["email"] = texto
-                estados_usuarios[remetente]["passo"] = "aguardando_problema"
-                enviar_msg(remetente, "📝 *Descrição do Problema*\nRelate o que está acontecendo:")
+                estados_usuarios[remetente]["passo"] = "problema"
+                enviar_msg(remetente, "Descreva o *problema*:")
             
-            elif passo == "aguardando_problema":
-                enviar_msg(remetente, "⏳ Registrando chamado...")
-                sucesso = enviar_email(estados_usuarios[remetente]["dados"]["nome"], estados_usuarios[remetente]["dados"]["email"], texto)
-                
-                if sucesso:
-                    msg_final = "✅ *CHAMADO ABERTO COM SUCESSO*\nVerifique seu e-mail para acompanhar."
-                    enviar_msg(remetente, msg_final)
-                else:
-                    reagir(remetente, "❌")
-                    enviar_msg(remetente, "⚠️ Erro no servidor de e-mail. Tente mais tarde.")
-                
+            elif passo == "problema":
+                enviar_msg(remetente, "⏳ Registrando...")
+                ok = enviar_email(estados_usuarios[remetente]["dados"]["nome"], estados_usuarios[remetente]["dados"]["email"], texto)
+                if ok: enviar_msg(remetente, "✅ Chamado criado! Verifique seu e-mail.")
+                else: enviar_msg(remetente, "❌ Erro no e-mail.")
                 del estados_usuarios[remetente]
+            
             return "OK", 200
 
-        # === CONSULTA SDB ===
+        # === 3. MENU PRINCIPAL (Gatilhos) ===
+        if texto_lower == "1":
+            estados_usuarios[remetente] = {"passo": "nome", "dados": {}}
+            enviar_msg(remetente, "📝 Digite seu *Nome Completo*:")
+            return "OK", 200
+            
+        if texto_lower == "2":
+            enviar_msg(remetente, "🔍 Digite o chamado (Ex: SDB 12345):")
+            return "OK", 200
+            
+        if texto_lower == "3":
+            enviar_msg(remetente, "👤 Transferindo para humano...")
+            return "OK", 200
+            
         if "sdb" in texto_lower:
             num = "".join([c for c in texto if c.isdigit()])
-            chave = f"SDB-{num}"
-            enviar_msg(remetente, f"🔄 Buscando {chave}...")
-            
-            d = consultar_jira(chave)
-            if d:
-                resp = f"📂 *{chave}*\nStatus: {d['status']}\nResp: {d['responsavel']}\n🔗 {d['link']}"
-            else:
-                resp = f"🚫 Chamado {chave} não encontrado."
-            enviar_msg(remetente, resp)
+            res = consultar_jira(f"SDB-{num}")
+            if res: enviar_msg(remetente, f"📂 *SDB-{num}*\nStatus: {res['status']}\nResp: {res['responsavel']}")
+            else: enviar_msg(remetente, f"🚫 SDB-{num} não encontrado.")
+            return "OK", 200
+
+        # === 4. SE NÃO ENTENDEU, MOSTRA O MENU ===
+        # Se não é comando conhecido, manda o menu
+        apresentar_menu(remetente)
 
     except Exception as e: print(e)
-    return jsonify({"status": "ok"}), 200
+    return "OK", 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 EOF
 
-# 3. Execução
 CMD ["gunicorn", "--workers", "1", "--bind", "0.0.0.0:5000", "app:app"]
