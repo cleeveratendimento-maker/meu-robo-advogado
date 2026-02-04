@@ -3,12 +3,12 @@ FROM python:3.10-slim
 # --- CONFIGURAÇÃO DO AMBIENTE ---
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
-ENV VERSAO_BOT=14.0_NOVA_BUTTONS
+ENV VERSAO_BOT=15.0_NOVA_BUTTONS_PRO
 
 # 1. Instalação das bibliotecas
 RUN pip install flask requests gunicorn jira
 
-# 2. ESCREVENDO O CÓDIGO PYTHON (COM SUPORTE A BOTÕES)
+# 2. ESCREVENDO O CÓDIGO PYTHON (ATUALIZADO COM BOTÕES)
 RUN cat <<'EOF' > app.py
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
@@ -27,28 +27,26 @@ app = Flask(__name__)
 # ======================================================
 JIRA_SERVER = "https://zonacriativa.atlassian.net"
 JIRA_EMAIL_LOGIN = "ti@pillowtex.com.br"
+# Token Jira (Mantido do seu código original)
 JIRA_TOKEN = "ATATT3xFfGF0gTvEQie0CsNToWBMT5sgW-kXIwm5HH4vkEqRFl_M2s1peiP0GtjsoBWe5wk_mnLOsTByWxR_RXQXa3Qxa8-bQj3uTB2WPBC12nwtFW59FD2K5xpGbOjFnLQ7ngz2v69_Vn8XZ5iOmO6O5AlGfQIZE7YnJ99RnRAftvd9RiOQ9tc=F9128AAA"
 
-EMAIL_DESTINO_TOMTICKET = "aprendiz.ti@pillowtex.com.br"
+EMAIL_DESTINO_TOMTICKET = "chamados.ti@pillowtex.com.br"
 
 # 👇👇👇 DADOS DE ENVIO (GMAIL) 👇👇👇
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "ti.monitoriamento@gmail.com"      # 🔴 COLOQUE SEU EMAIL
-SMTP_PASSWORD = "lvvg ragw eqry fgdz"  # 🔴 COLOQUE SUA SENHA DE APP
+SMTP_USER = "seu.email@gmail.com"      # 🔴 SEU GMAIL AQUI
+SMTP_PASSWORD = "xxxx xxxx xxxx xxxx"  # 🔴 SENHA DE APP AQUI
 
 # Dados da Evolution API
 INSTANCE_NAME = "Chatboot"
 EVOLUTION_URL = "https://chatboot-evolution-api.iatjve.easypanel.host"
 EVOLUTION_KEY = "429683C4C977415CAAFCCE10F7D57E11"
 
-# Banner GIF (Opcional - Pode comentar se quiser só os botões)
-BANNER_GIF = "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmJmaG14cm14bnh6eGxhYm14bnh6eGxhYm14bnh6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPEqDGUULpEU0aQ/giphy.gif"
-
 estados_usuarios = {}
 
 # ======================================================
-# 🎨 MOTOR VISUAL N.O.V.A. (AGORA COM BOTÕES)
+# 🎨 MOTOR VISUAL N.O.V.A. (COM BOTÕES)
 # ======================================================
 
 def reagir(numero, emoji):
@@ -60,7 +58,7 @@ def reagir(numero, emoji):
 def digitando(numero):
     try:
         requests.post(f"{EVOLUTION_URL}/chat/sendPresence/{INSTANCE_NAME}", 
-                      json={"number": numero, "presence": "composing", "delay": 1500}, headers={"apikey": EVOLUTION_KEY})
+                      json={"number": numero, "presence": "composing", "delay": 1200}, headers={"apikey": EVOLUTION_KEY})
     except: pass
 
 def enviar_msg(numero, texto):
@@ -71,18 +69,18 @@ def enviar_msg(numero, texto):
 def apresentar_interface_ai(numero):
     try:
         reagir(numero, "💠")
+        digitando(numero)
         
-        # 1. Envia o Menu de Botões (Button Message)
-        # Isso cria aqueles botões clicáveis bonitos
+        # --- AQUI ESTÁ A MUDANÇA PARA BOTÕES ---
         payload = {
             "number": numero,
-            "title": "💠 SYSTEM ONLINE v14.0",
-            "description": "Olá! Sou a N.O.V.A. Escolha uma opção abaixo para prosseguir:",
+            "title": "💠 SYSTEM ONLINE v15.0",
+            "description": "Olá! Sou a N.O.V.A. Escolha uma opção abaixo:",
             "footer": "Pillowtex TI",
             "buttons": [
                 {"id": "1", "displayText": "📝 ABRIR CHAMADO"},
                 {"id": "2", "displayText": "🔍 RASTREAR SDB"},
-                {"id": "3", "displayText": "👤 ATENDENTE HUMANO"}
+                {"id": "3", "displayText": "👤 FALA C/ HUMANO"}
             ]
         }
         
@@ -93,7 +91,7 @@ def apresentar_interface_ai(numero):
     except Exception as e: print(e)
 
 # ======================================================
-# 🔧 NÚCLEO LÓGICO
+# 🔧 NÚCLEO LÓGICO (JIRA + EMAIL)
 # ======================================================
 def consultar_jira(ticket_id):
     try:
@@ -116,7 +114,7 @@ def enviar_email(nome, email_user, problema):
         msg['Subject'] = f"[NOVA AI] Ticket: {nome}"
         msg.add_header('Reply-To', email_user)
         
-        corpo = f"RELATÓRIO DE INCIDENTE\n======================\n\nUSUÁRIO: {nome}\nEMAIL: {email_user}\n\nDESCRIÇÃO:\n{problema}\n\n--\nProcessado por N.O.V.A."
+        corpo = f"RELATÓRIO DE INCIDENTE\n======================\n\nUSUÁRIO: {nome}\nEMAIL: {email_user}\n\nDESCRIÇÃO:\n{problema}\n\n--\nProcessado por N.O.V.A. v15.0"
         msg.attach(MIMEText(corpo, 'plain'))
 
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
@@ -136,15 +134,12 @@ def webhook(path=None):
         
         msg = data.get("data", {}).get("message", {})
         
-        # --- PARSER ATUALIZADO (LÊ BOTÕES E TEXTO) ---
-        # 1. Tenta ler texto normal
-        # 2. Tenta ler resposta de botão (buttonsResponseMessage)
-        # 3. Tenta ler resposta de lista (listResponseMessage)
+        # --- PARSER ATUALIZADO (IMPORTANTE) ---
+        # Agora ele lê: Texto Normal OU Resposta de Botão
         texto = (
             msg.get("conversation") or 
             msg.get("extendedTextMessage", {}).get("text") or
-            msg.get("buttonsResponseMessage", {}).get("selectedButtonId") or
-            msg.get("listResponseMessage", {}).get("singleSelectReply", {}).get("selectedRowId") or
+            msg.get("buttonsResponseMessage", {}).get("selectedButtonId") or 
             ""
         )
         
@@ -163,20 +158,17 @@ def webhook(path=None):
         gatilhos = ["oi", "ola", "bom dia", "ajuda", "ti", "suporte", "nova", "inicio"]
         
         if remetente not in estados_usuarios:
-            # Se for SDB direto, deixa passar
-            if "sdb" in texto_lower: pass 
-            # Se não falou palavra chave e não é um número de botão (1,2,3), ignora
+            if "sdb" in texto_lower: pass
             elif not any(x in texto_lower for x in gatilhos) and texto_lower not in ["1", "2", "3"]: 
                 return "OK", 200
             
-            # Se não escolheu opção válida, mostra os botões
+            # Se não é comando direto, mostra menu
             if not "sdb" in texto_lower and texto_lower not in ["1", "2", "3"]:
                  apresentar_interface_ai(remetente)
                  return "OK", 200
 
         # === ROTEADOR DE OPÇÕES ===
         acao = ""
-        # Agora funciona tanto digitando "1" quanto CLICANDO no botão com ID "1"
         if texto_lower == "1": acao = "abrir"
         elif texto_lower == "2": acao = "status"
         elif texto_lower == "3": acao = "falar"
@@ -184,17 +176,17 @@ def webhook(path=None):
         if acao == "abrir":
             reagir(remetente, "📝")
             estados_usuarios[remetente] = {"passo": "aguardando_nome", "dados": {}}
-            enviar_msg(remetente, "📝 *Abertura de Chamado*\n\nPara começar, digite seu *Nome Completo*:")
+            enviar_msg(remetente, "📝 *PROTOCOLO DE ABERTURA*\n\nPor favor, digite seu *Nome Completo*:")
             return "OK", 200
 
         if acao == "status":
              reagir(remetente, "🔍")
-             enviar_msg(remetente, "🔍 *Rastreio*\n\nDigite o código do chamado.\n_Exemplo: SDB 12345_")
+             enviar_msg(remetente, "🔍 *RASTREIO SDB*\n\nInforme o código do protocolo (Ex: SDB 90609):")
              return "OK", 200
              
         if acao == "falar":
              reagir(remetente, "👤")
-             enviar_msg(remetente, "Aguarde um momento, transferindo para um humano... ☕")
+             enviar_msg(remetente, "✅ Transferindo para analista humano...\nAguarde um instante.")
              return "OK", 200
 
         # === FLUXO DE ABERTURA (ETAPAS) ===
@@ -204,21 +196,23 @@ def webhook(path=None):
             if passo == "aguardando_nome":
                 estados_usuarios[remetente]["dados"]["nome"] = texto
                 estados_usuarios[remetente]["passo"] = "aguardando_email"
-                enviar_msg(remetente, f"Ok, *{texto}*. Agora digite seu *E-mail Corporativo*:")
+                enviar_msg(remetente, f"Ok, *{texto}*.\nAgora digite seu *E-mail Corporativo*:")
             
             elif passo == "aguardando_email":
                 estados_usuarios[remetente]["dados"]["email"] = texto
                 estados_usuarios[remetente]["passo"] = "aguardando_problema"
-                enviar_msg(remetente, "Por favor, *descreva o problema* detalhadamente:")
+                enviar_msg(remetente, "📝 *Descrição do Problema*\nRelate o que está acontecendo:")
             
             elif passo == "aguardando_problema":
-                enviar_msg(remetente, "⏳ Registrando...")
+                enviar_msg(remetente, "⏳ Registrando chamado...")
                 sucesso = enviar_email(estados_usuarios[remetente]["dados"]["nome"], estados_usuarios[remetente]["dados"]["email"], texto)
                 
                 if sucesso:
-                    enviar_msg(remetente, "✅ *Chamado Criado!*\nVerifique seu e-mail para acompanhar.")
+                    msg_final = "✅ *CHAMADO ABERTO COM SUCESSO*\nVerifique seu e-mail para acompanhar."
+                    enviar_msg(remetente, msg_final)
                 else:
-                    enviar_msg(remetente, "❌ Erro ao enviar e-mail. Tente mais tarde.")
+                    reagir(remetente, "❌")
+                    enviar_msg(remetente, "⚠️ Erro no servidor de e-mail. Tente mais tarde.")
                 
                 del estados_usuarios[remetente]
             return "OK", 200
@@ -227,13 +221,13 @@ def webhook(path=None):
         if "sdb" in texto_lower:
             num = "".join([c for c in texto if c.isdigit()])
             chave = f"SDB-{num}"
-            enviar_msg(remetente, f"Buscando {chave}...")
+            enviar_msg(remetente, f"🔄 Buscando {chave}...")
             
             d = consultar_jira(chave)
             if d:
                 resp = f"📂 *{chave}*\nStatus: {d['status']}\nResp: {d['responsavel']}\n🔗 {d['link']}"
             else:
-                resp = f"🚫 Não encontrei o chamado {chave}."
+                resp = f"🚫 Chamado {chave} não encontrado."
             enviar_msg(remetente, resp)
 
     except Exception as e: print(e)
