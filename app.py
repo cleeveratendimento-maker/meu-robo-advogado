@@ -9,6 +9,8 @@ import os
 
 app = Flask(__name__)
 
+
+estados_usuarios = {}
 # ======================================================
 # 🔐 VARIÁVEIS DE AMBIENTE (CONFIGURAR NO EASYPANEL)
 # ======================================================
